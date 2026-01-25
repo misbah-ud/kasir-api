@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -161,6 +162,14 @@ func main() {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	})
 
-	fmt.Println("Server running di http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	fmt.Println("Server running on 0.0.0.0:" + port)
+	err := http.ListenAndServe("0.0.0.0:"+port, nil)
+	if err != nil {
+		fmt.Println("gagal running server:", err)
+	}
 }
