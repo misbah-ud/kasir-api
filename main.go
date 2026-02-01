@@ -47,9 +47,10 @@ func main() {
 	// Setup database
 	db, err := database.InitDB(config.DBConn)
 	if err != nil {
-		log.Fatal("Failed to initialize database:", err)
+		log.Println("DB not connected:", err)
+	} else {
+		defer db.Close()
 	}
-	defer db.Close()
 
 	// ===== Dependency Injection (SESUAI MATERI) =====
 	productRepo := repositories.NewProductRepository(db)
