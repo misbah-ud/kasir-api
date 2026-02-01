@@ -41,21 +41,16 @@ func main() {
 		DBConn: viper.GetString("DB_CONN"),
 	}
 
-	// Debug (boleh hapus nanti)
 	fmt.Println("DB_CONN:", config.DBConn)
 
 	// Setup database
 	db, err := database.InitDB(config.DBConn)
 	if err != nil {
 		log.Println("DB not connected:", err)
+		db = nil
 	} else {
 		defer db.Close()
 	}
-
-	// ===== Dependency Injection (SESUAI MATERI) =====
-	productRepo := repositories.NewProductRepository(db)
-	productService := services.NewProductService(productRepo)
-	productHandler := handlers.NewProductHandler(productService)
 
 	// Health check
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -66,9 +61,25 @@ func main() {
 		})
 	})
 
-	// ===== Routes (SESUAI MATERI) =====
-	http.HandleFunc("/api/produk", productHandler.HandleProducts)
-	http.HandleFunc("/api/produk/", productHandler.HandleProductByID)
+	// ===== Routes + Dependency Injection =====
+	if db == nil {
+		// Return 503 Service Unavailable jika database tidak terhubung
+		http.HandleFunc("/api/produk", func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "Database unavailable", http.StatusServiceUnavailable)
+		})
+		http.HandleFunc("/api/produk/", func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "Database unavailable", http.StatusServiceUnavailable)
+		})
+	} else {
+		// ===== Dependency Injection (SESUAI MATERI) =====
+		productRepo := repositories.NewProductRepository(db)
+		productService := services.NewProductService(productRepo)
+		productHandler := handlers.NewProductHandler(productService)
+
+		// ===== Routes (SESUAI MATERI) =====
+		http.HandleFunc("/api/produk", productHandler.HandleProducts)
+		http.HandleFunc("/api/produk/", productHandler.HandleProductByID)
+	}
 
 	addr := "0.0.0.0:" + config.Port
 	fmt.Println("Server running di", addr)
