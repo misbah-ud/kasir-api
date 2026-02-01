@@ -68,15 +68,28 @@ func main() {
 		http.HandleFunc("/api/produk/", func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Database unavailable", http.StatusServiceUnavailable)
 		})
+
+		http.HandleFunc("/api/categories", func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "Database unavailable", http.StatusServiceUnavailable)
+		})
+		http.HandleFunc("/api/categories/", func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "Database unavailable", http.StatusServiceUnavailable)
+		})
 	} else {
-		// ===== Dependency Injection (SESUAI MATERI) =====
 		productRepo := repositories.NewProductRepository(db)
 		productService := services.NewProductService(productRepo)
 		productHandler := handlers.NewProductHandler(productService)
 
-		// ===== Routes (SESUAI MATERI) =====
 		http.HandleFunc("/api/produk", productHandler.HandleProducts)
 		http.HandleFunc("/api/produk/", productHandler.HandleProductByID)
+
+		categoryRepo := repositories.NewCategoryRepository(db)
+		categoryService := services.NewCategoryService(categoryRepo)
+		categoryHandler := handlers.NewCategoryHandler(categoryService)
+
+		http.HandleFunc("/api/categories", categoryHandler.HandleCategories)
+		http.HandleFunc("/api/categories/", categoryHandler.HandleCategoryByID)
+
 	}
 
 	addr := "0.0.0.0:" + config.Port
